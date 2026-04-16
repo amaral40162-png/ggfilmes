@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Alert } from 'react-native';
 import { auth, db } from '../services/firebase';
 
 interface AuthContextType {
@@ -19,21 +20,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
       setUser(user);
+      
       if (user) {
-        // Busca o coupleId do perfil do usuário no Firestore
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setCoupleId(userDoc.data().coupleId);
-        } else {
-          // Se for novo usuário, por padrão ele é o próprio "coupleId"
-          // Até que ele vincule com outra pessoa
-          const defaultCoupleId = user.uid;
-          await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
-            coupleId: defaultCoupleId
-          });
-          setCoupleId(defaultCoupleId);
+        try {
+          // Busca o coupleId do perfil do usuário no Firestore
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            setCoupleId(userDoc.data().coupleId);
+          } else {
+            // Se for novo usuário, por padrão ele é o próprio "coupleId"
+            const defaultCoupleId = user.uid;
+            await setDoc(userDocRef, {
+              email: user.email,
+              coupleId: defaultCoupleId
+            });
+            setCoupleId(defaultCoupleId);
+          }
+        } catch (error: any) {
+          console.error("Erro ao gerenciar perfil do usuário:", error);
+          // Se falhar aqui, provavelmente são as regras do Firestore
+          Alert.alert(
+            "Erro de Sincronização", 
+            "Não foi possível carregar seu perfil. Verifique se as regras do Firestore permitem acesso.\n\n" + error.message
+          );
         }
       } else {
         setCoupleId(null);
@@ -46,8 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateCoupleId = async (newId: string) => {
     if (user) {
-      await setDoc(doc(db, 'users', user.uid), { coupleId: newId }, { merge: true });
-      setCoupleId(newId);
+      try {
+        await setDoc(doc(db, 'users', user.uid), { coupleId: newId }, { merge: true });
+        setCoupleId(newId);
+      } catch (error: any) {
+        Alert.alert("Erro ao Vincular", error.message);
+      }
     }
   };
 
