@@ -36,10 +36,15 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       if (Platform.OS === 'web') {
-        // Método mais estável para Web/Netlify
-        await signInWithPopup(auth, googleProvider);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator?.userAgent || '');
+        if (isMobile) {
+          // O celular costuma dar erro com popup (bloqueio do Safari/Aba fantasma), então usamos redirect
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          // PC lida bem com popup, que é muito mais rápido
+          await signInWithPopup(auth, googleProvider);
+        }
       } else {
-        // Redirecionamento para Native (se houver)
         await signInWithRedirect(auth, googleProvider);
       }
     } catch (error: any) {
