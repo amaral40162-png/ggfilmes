@@ -47,7 +47,8 @@ export default function Home() {
     <ImageBackground 
       source={require('@/assets/images/casal.jpg')} 
       style={styles.container}
-      resizeMode="cover"
+      resizeMode="contain"
+      imageStyle={{ backgroundColor: '#000' }}
     >
       <SafeAreaView style={styles.containerStyle}>
         <LinearGradient colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} style={styles.background} />
