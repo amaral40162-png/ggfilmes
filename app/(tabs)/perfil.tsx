@@ -106,7 +106,7 @@ export default function ProfileScreen() {
             <Text style={styles.cardLabel}>Vincular ao código dele(a):</Text>
             <View style={styles.inputRow}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { outlineStyle: 'none' } as any]}
                 placeholder="Ex: 123456"
                 placeholderTextColor="#666"
                 value={newCoupleId}

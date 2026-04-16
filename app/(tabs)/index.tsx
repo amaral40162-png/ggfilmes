@@ -70,7 +70,7 @@ export default function Home() {
               placeholderTextColor="#666"
               value={query}
               onChangeText={setQuery}
-              style={styles.input}
+              style={[styles.input, { outlineStyle: 'none' } as any]}
             />
             {loading && (
               <ActivityIndicator size="small" color="#ff4081" style={styles.loader} />
