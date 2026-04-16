@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "316635272922",
+    "project_id": "gg-filmes-15a23",
+    "storage_bucket": "gg-filmes-15a23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316635272922:android:110a1b4d565c6b01d437e3",
+        "android_client_info": {
+          "package_name": "ggfilmes.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC1IGukbe8eEtpplEsrAxkURH0RMYBnJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
