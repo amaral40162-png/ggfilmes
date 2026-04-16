@@ -7,7 +7,7 @@ import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function ReviewModal() {
-  const { activeMovie, setActiveMovie, watched, setWatched, watchlist, setWatchlist } = useContext(MovieContext);
+  const { activeMovie, setActiveMovie, watchlist, addMovieToWatched, removeMovie } = useContext(MovieContext);
 
   const [userRating, setUserRating] = useState(5);
   const [partnerRating, setPartnerRating] = useState(5);
@@ -15,26 +15,31 @@ export default function ReviewModal() {
 
   if (!activeMovie) return null;
 
-  const handleSave = () => {
-    const movieWithReview = {
-      ...activeMovie,
-      coupleReview: {
-        userRating,
-        partnerRating,
-        notes,
-        date: new Date().toLocaleDateString('pt-BR')
-      }
-    };
+  const handleSave = async () => {
+    try {
+      // Tenta encontrar o docId se o filme estiver na watchlist
+      const watchlistItem = watchlist.find((m: any) => m.id === activeMovie.id);
+      
+      const movieWithReview = {
+        ...activeMovie,
+        docId: watchlistItem?.docId, // Passa o docId se existir para o context decidir se cria ou atualiza
+        coupleReview: {
+          userRating,
+          partnerRating,
+          notes,
+          date: new Date().toLocaleDateString('pt-BR')
+        }
+      };
 
-    // Add to watched
-    setWatched([...watched, movieWithReview]);
+      // Adiciona aos assistidos (o context vai gerenciar o status)
+      await addMovieToWatched(movieWithReview);
 
-    // Remove from watchlist if present
-    setWatchlist(watchlist.filter((m: any) => m.id !== activeMovie.id));
-
-    // Close modal
-    setActiveMovie(null);
-    router.back();
+      // Limpa o filme ativo e volta
+      setActiveMovie(null);
+      router.back();
+    } catch (error) {
+      console.error("Erro ao salvar avaliação:", error);
+    }
   };
 
   const RatingStars = ({ rating, onRatingChange, label }: any) => (

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "./AuthContext";
 
@@ -48,7 +48,7 @@ export function MovieProvider({ children }: any) {
         };
     }, [coupleId]);
 
-    const addToWatchlist = async (movie: any) => {
+    const addMovieToWatchlist = async (movie: any) => {
         if (!coupleId) return;
         try {
             await addDoc(collection(db, "movies"), {
@@ -62,11 +62,10 @@ export function MovieProvider({ children }: any) {
         }
     };
 
-    const addToWatched = async (movieWithReview: any) => {
+    const addMovieToWatched = async (movieWithReview: any) => {
         if (!coupleId) return;
         try {
-            // Se o filme já estiver na watchlist, deletamos o antigo e criamos o novo "assistido"
-            // Ou atualizamos se já tiver um docId
+            // Se o filme já tiver um docId (veio da watchlist), atualizamos
             if (movieWithReview.docId) {
                 await updateDoc(doc(db, "movies", movieWithReview.docId), {
                     ...movieWithReview,
@@ -74,6 +73,7 @@ export function MovieProvider({ children }: any) {
                     updatedAt: new Date().toISOString()
                 });
             } else {
+                // Caso contrário, criamos um novo
                 await addDoc(collection(db, "movies"), {
                     ...movieWithReview,
                     coupleId,
@@ -86,7 +86,8 @@ export function MovieProvider({ children }: any) {
         }
     };
 
-    const removeFromWatchlist = async (docId: string) => {
+    const removeMovie = async (docId: string) => {
+        if (!docId) return;
         try {
             await deleteDoc(doc(db, "movies", docId));
         } catch (e) {
@@ -98,10 +99,10 @@ export function MovieProvider({ children }: any) {
         <MovieContext.Provider
             value={{ 
                 watched, 
-                setWatched: addToWatched, 
+                addMovieToWatched, 
                 watchlist, 
-                setWatchlist: addToWatchlist, 
-                removeFromWatchlist,
+                addMovieToWatchlist, 
+                removeMovie,
                 activeMovie, 
                 setActiveMovie 
             }}

@@ -15,26 +15,22 @@ export default function Home() {
   
   const debouncedQuery = useDebounce(query, 500);
 
-  const { watched, watchlist, setWatchlist, setActiveMovie } = useContext(MovieContext);
+  const { watchlist, addMovieToWatchlist, setActiveMovie } = useContext(MovieContext);
 
-  useEffect(() => {
-    const handleAutoSearch = async () => {
-      if (debouncedQuery.trim().length > 1) {
-        setLoading(true);
-        const results = await searchMovies(debouncedQuery);
-        setMovies(results);
-        setLoading(false);
-      } else if (debouncedQuery.trim().length === 0) {
-        setMovies([]);
-      }
-    };
+  const handleAutoSearch = async () => {
+    if (debouncedQuery.trim().length > 1) {
+      setLoading(true);
+      const results = await searchMovies(debouncedQuery);
+      setMovies(results);
+      setLoading(false);
+    } else if (debouncedQuery.trim().length === 0) {
+      setMovies([]);
+    }
+  };
 
-    handleAutoSearch();
-  }, [debouncedQuery]);
-
-  const addToWatchlist = (movie: any) => {
+  const handleAddToWatchlist = (movie: any) => {
     if (!watchlist.find((m: any) => m.id === movie.id)) {
-      setWatchlist([...watchlist, movie]);
+      addMovieToWatchlist(movie);
     }
   };
 
@@ -42,6 +38,10 @@ export default function Home() {
     setActiveMovie(movie);
     router.push("/modal");
   };
+
+  useEffect(() => {
+    handleAutoSearch();
+  }, [debouncedQuery]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -80,7 +80,7 @@ export default function Home() {
         renderItem={({ item }) => (
           <MovieCard 
             movie={item} 
-            onPressAdd={() => addToWatchlist(item)}
+            onPressAdd={() => handleAddToWatchlist(item)}
             onPressWatch={() => openReviewModal(item)}
           />
         )}
