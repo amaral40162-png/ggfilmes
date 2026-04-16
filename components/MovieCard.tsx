@@ -40,9 +40,11 @@ export const MovieCard = ({ movie, onPressAdd, onPressWatch, isWatched }: MovieC
         {movie.coupleReview && (
           <View style={styles.coupleReviewRow}>
             <View style={styles.coupleBadge}>
-              <Ionicons name="heart" size={12} color="#ff4081" />
+              <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.coupleRatingText}>
-                {movie.coupleReview.userRating} | {movie.coupleReview.partnerRating}
+                {movie.coupleReview.averageRating !== undefined 
+                  ? movie.coupleReview.averageRating.toFixed(1) 
+                  : ((movie.coupleReview.userRating + movie.coupleReview.partnerRating) / 2).toFixed(1)} / 10
               </Text>
             </View>
             {movie.coupleReview.notes && (

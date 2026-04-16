@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { View, TextInput, FlatList, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, TextInput, FlatList, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator, ImageBackground } from "react-native";
 import { searchMovies } from "@/services/api";
 import { MovieContext } from "@/src/context/MovieContext";
 import { MovieCard } from "@/components/MovieCard";
@@ -44,60 +44,66 @@ export default function Home() {
   }, [debouncedQuery]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#1a1a1a', '#000']} style={styles.background} />
-      
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Olá, Casal! ❤️</Text>
-        <Text style={styles.subtitle}>O que vamos assistir hoje?</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.inputWrapper}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            placeholder="Buscar filme..."
-            placeholderTextColor="#666"
-            value={query}
-            onChangeText={setQuery}
-            style={styles.input}
-          />
-          {loading && (
-            <ActivityIndicator size="small" color="#ff4081" style={styles.loader} />
-          )}
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery("")} style={styles.clearBtn}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          )}
+    <ImageBackground 
+      source={require('@/assets/images/casal.jpg')} 
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.containerStyle}>
+        <LinearGradient colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} style={styles.background} />
+        
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Olá, Casal! ❤️</Text>
+          <Text style={styles.subtitle}>O que vamos assistir hoje?</Text>
         </View>
-      </View>
 
-      <FlatList
-        data={movies}
-        contentContainerStyle={styles.listContent}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <MovieCard 
-            movie={item} 
-            onPressAdd={() => handleAddToWatchlist(item)}
-            onPressWatch={() => openReviewModal(item)}
-          />
-        )}
-        ListEmptyComponent={
-          !loading ? (
-            <View style={styles.empty}>
-              <Ionicons name="film-outline" size={60} color="#333" />
-              <Text style={styles.emptyText}>
-                {query.length > 0 
-                  ? "Nenhum filme encontrado para essa busca." 
-                  : "Procure por filmes para adicionar à sua lista!"}
-              </Text>
-            </View>
-          ) : null
-        }
-      />
-    </SafeAreaView>
+        <View style={styles.searchContainer}>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Buscar filme..."
+              placeholderTextColor="#666"
+              value={query}
+              onChangeText={setQuery}
+              style={styles.input}
+            />
+            {loading && (
+              <ActivityIndicator size="small" color="#ff4081" style={styles.loader} />
+            )}
+            {query.length > 0 && (
+              <TouchableOpacity onPress={() => setQuery("")} style={styles.clearBtn}>
+                <Ionicons name="close-circle" size={20} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <FlatList
+          data={movies}
+          contentContainerStyle={styles.listContent}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <MovieCard 
+              movie={item} 
+              onPressAdd={() => handleAddToWatchlist(item)}
+              onPressWatch={() => openReviewModal(item)}
+            />
+          )}
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.empty}>
+                <Ionicons name="film-outline" size={60} color="rgba(255,255,255,0.4)" />
+                <Text style={styles.emptyText}>
+                  {query.length > 0 
+                    ? "Nenhum filme encontrado para essa busca." 
+                    : "Procure por filmes para adicionar à sua lista!"}
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
@@ -105,6 +111,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  containerStyle: {
+    flex: 1,
   },
   background: {
     ...StyleSheet.absoluteFillObject,

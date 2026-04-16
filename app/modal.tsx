@@ -9,8 +9,8 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function ReviewModal() {
   const { activeMovie, setActiveMovie, watchlist, addMovieToWatched, removeMovie } = useContext(MovieContext);
 
-  const [userRating, setUserRating] = useState(5);
-  const [partnerRating, setPartnerRating] = useState(5);
+  const [userRating, setUserRating] = useState("10.0");
+  const [partnerRating, setPartnerRating] = useState("10.0");
   const [notes, setNotes] = useState("");
 
   if (!activeMovie) return null;
@@ -20,12 +20,18 @@ export default function ReviewModal() {
       // Tenta encontrar o docId se o filme estiver na watchlist
       const watchlistItem = watchlist.find((m: any) => m.id === activeMovie.id);
       
+      const uNum = parseFloat(userRating.replace(',', '.')) || 0;
+      const pNum = parseFloat(partnerRating.replace(',', '.')) || 0;
+      
+      const averageRating = (uNum + pNum) / 2;
+
       const movieWithReview = {
         ...activeMovie,
         docId: watchlistItem?.docId, // Passa o docId se existir para o context decidir se cria ou atualiza
         coupleReview: {
-          userRating,
-          partnerRating,
+          userRating: uNum,
+          partnerRating: pNum,
+          averageRating: averageRating,
           notes,
           date: new Date().toLocaleDateString('pt-BR')
         }
@@ -42,19 +48,21 @@ export default function ReviewModal() {
     }
   };
 
-  const RatingStars = ({ rating, onRatingChange, label }: any) => (
+  const DecimalInput = ({ ratingStr, onRatingChange, label, icon }: any) => (
     <View style={styles.ratingSection}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.starsContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity key={star} onPress={() => onRatingChange(star)}>
-            <Ionicons
-              name={star <= rating ? "star" : "star-outline"}
-              size={32}
-              color={star <= rating ? "#FFD700" : "#444"}
-            />
-          </TouchableOpacity>
-        ))}
+      <View style={styles.inputRow}>
+        <Ionicons name={icon} size={28} color="#ff4081" />
+        <TextInput
+          value={ratingStr}
+          onChangeText={onRatingChange}
+          keyboardType="decimal-pad"
+          maxLength={4}
+          placeholder="0.0"
+          placeholderTextColor="#444"
+          style={styles.decimalInput}
+        />
+        <Text style={styles.maxRatingText}>/ 10</Text>
       </View>
     </View>
   );
@@ -82,15 +90,17 @@ export default function ReviewModal() {
           </View>
         </View>
 
-        <RatingStars
+        <DecimalInput
           label="Sua Nota (Ele)"
-          rating={userRating}
+          icon="body"
+          ratingStr={userRating}
           onRatingChange={setUserRating}
         />
 
-        <RatingStars
+        <DecimalInput
           label="Nota Dela (Geovanna)"
-          rating={partnerRating}
+          icon="woman"
+          ratingStr={partnerRating}
           onRatingChange={setPartnerRating}
         />
 
@@ -179,9 +189,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
   },
-  starsContainer: {
+  inputRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 15,
+  },
+  decimalInput: {
+    backgroundColor: '#222',
+    color: '#FFD700',
+    fontSize: 28,
+    fontWeight: 'bold',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: 100,
+    textAlign: 'center',
+  },
+  maxRatingText: {
+    color: '#666',
+    fontSize: 20,
+    fontWeight: '700',
   },
   inputSection: {
     marginBottom: 40,
