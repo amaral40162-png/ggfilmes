@@ -55,18 +55,27 @@ export function MovieProvider({ children }: any) {
         };
     }, [coupleId]);
 
+    // Utilitário para remover propriedades 'undefined' que causam crash no Firebase
+    const sanitizeForFirebase = (obj: any) => {
+        return JSON.parse(JSON.stringify(obj));
+    };
+
     const addMovieToWatchlist = async (movie: any) => {
         if (!coupleId) {
             Alert.alert("Erro", "Você precisa estar logado e vinculado para salvar filmes.");
             return;
         }
         try {
-            await addDoc(collection(db, "movies"), {
+            const safeMovie = sanitizeForFirebase({
                 ...movie,
                 coupleId,
                 status: "watchlist",
                 createdAt: new Date().toISOString()
             });
+            // Remover docId se existir por engano no objeto do TMDB
+            delete safeMovie.docId;
+
+            await addDoc(collection(db, "movies"), safeMovie);
             Alert.alert("Sucesso", "Adicionado à lista de desejos!");
         } catch (e: any) {
             console.error("Error adding to watchlist", e);
@@ -80,19 +89,22 @@ export function MovieProvider({ children }: any) {
             return;
         }
         try {
-            if (movieWithReview.docId) {
-                await updateDoc(doc(db, "movies", movieWithReview.docId), {
-                    ...movieWithReview,
-                    status: "watched",
-                    updatedAt: new Date().toISOString()
-                });
+            const existingDocId = movieWithReview.docId;
+            
+            const safeMovie = sanitizeForFirebase({
+                ...movieWithReview,
+                coupleId,
+                status: "watched",
+                updatedAt: new Date().toISOString()
+            });
+            // O Firebase não permite salvar a chave docId dentro do próprio documento
+            delete safeMovie.docId;
+
+            if (existingDocId) {
+                await updateDoc(doc(db, "movies", existingDocId), safeMovie);
             } else {
-                await addDoc(collection(db, "movies"), {
-                    ...movieWithReview,
-                    coupleId,
-                    status: "watched",
-                    createdAt: new Date().toISOString()
-                });
+                safeMovie.createdAt = new Date().toISOString();
+                await addDoc(collection(db, "movies"), safeMovie);
             }
             Alert.alert("Sucesso", "Filme avaliado e salvo na biblioteca!");
         } catch (e: any) {
