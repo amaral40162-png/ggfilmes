@@ -44,13 +44,17 @@ export default function Home() {
   }, [debouncedQuery]);
 
   return (
-    <ImageBackground 
-      source={require('@/assets/images/casal.jpg')} 
-      style={styles.container}
-      resizeMode="contain"
-      imageStyle={{ backgroundColor: '#000' }}
-    >
-      <SafeAreaView style={styles.containerStyle}>
+    <View style={styles.container}>
+      <View style={StyleSheet.absoluteFillObject}>
+        <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
+          <ImageBackground 
+            source={require('@/assets/images/casal.jpg')} 
+            style={{ width: '100%', height: '100%' }}
+            imageStyle={{ resizeMode: 'contain', transform: [{ scale: 0.75 }] }}
+          />
+        </View>
+      </View>
+      <SafeAreaView style={styles.safeAreaOverlay}>
         <LinearGradient colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} style={styles.background} />
         
         <View style={styles.header}>
@@ -113,7 +117,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  containerStyle: {
+  safeAreaOverlay: {
     flex: 1,
   },
   background: {
