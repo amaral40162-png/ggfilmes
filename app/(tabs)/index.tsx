@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Image as ExpoImage } from "expo-image";
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -46,13 +47,12 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <View style={StyleSheet.absoluteFillObject}>
-        <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
-          <ImageBackground 
-            source={require('@/assets/images/casal.jpg')} 
-            style={{ width: '100%', height: '100%' }}
-            imageStyle={{ resizeMode: 'contain', transform: [{ scale: 0.75 }] }}
-          />
-        </View>
+        <ExpoImage
+          source={require('@/assets/images/casal.jpg')}
+          style={StyleSheet.absoluteFillObject}
+          contentFit="cover"
+          transition={500}
+        />
       </View>
       <SafeAreaView style={styles.safeAreaOverlay}>
         <LinearGradient colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} style={styles.background} />
