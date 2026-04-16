@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Keyb
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { auth, googleProvider } from '../src/services/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithRedirect } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithRedirect, signInWithPopup } from 'firebase/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -42,11 +42,22 @@ export default function LoginScreen() {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      await signInWithRedirect(auth, googleProvider);
+      // Se estiver local, o popup costuma ser mais amigável. Na Web/Netlify o Redirect é melhor.
+      if (Platform.OS === 'web' && window.location.hostname === 'localhost') {
+        await signInWithPopup(auth, googleProvider);
+      } else {
+        await signInWithRedirect(auth, googleProvider);
+      }
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Erro', 'Ocorreu um erro ao entrar com o Google.');
+      let message = 'Ocorreu um erro ao entrar com o Google.';
+      if (error.code === 'auth/unauthorized-domain') {
+        message = 'Este domínio não está autorizado no Firebase. Adicione ' + window.location.hostname + ' na lista de domínios autorizados.';
+      }
+      Alert.alert('Erro de Login', message + '\n\n' + error.message);
     } finally {
+      // No caso do redirect, o loading continuará até a página recarregar.
+      // Se houver erro ou popup, desligamos o loading aqui.
       setLoading(false);
     }
   };

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Alert } from 'react-native';
 import { auth, db } from '../services/firebase';
@@ -19,33 +19,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    // Processar o resultado do redirecionamento do Google se existir
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          console.log("Login via redirect bem-sucedido:", result.user.email);
+        }
+      } catch (error: any) {
+        console.error("Erro no retorno do redirect do Google:", error);
+        if (error.code !== 'auth/web-context-cancelled') {
+          Alert.alert("Erro de Login", "O Google recusou o acesso: " + error.message);
+        }
+      }
+    };
+
+    checkRedirect();
+
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setLoading(true);
-      setUser(user);
+      setUser(currentUser);
       
-      if (user) {
+      if (currentUser) {
         try {
           // Busca o coupleId do perfil do usuário no Firestore
-          const userDocRef = doc(db, 'users', user.uid);
+          const userDocRef = doc(db, 'users', currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
             setCoupleId(userDoc.data().coupleId);
           } else {
             // Se for novo usuário, por padrão ele é o próprio "coupleId"
-            const defaultCoupleId = user.uid;
+            const defaultCoupleId = currentUser.uid;
             await setDoc(userDocRef, {
-              email: user.email,
+              email: currentUser.email,
               coupleId: defaultCoupleId
             });
             setCoupleId(defaultCoupleId);
           }
         } catch (error: any) {
           console.error("Erro ao gerenciar perfil do usuário:", error);
-          // Se falhar aqui, provavelmente são as regras do Firestore
           Alert.alert(
             "Erro de Sincronização", 
-            "Não foi possível carregar seu perfil. Verifique se as regras do Firestore permitem acesso.\n\n" + error.message
+            "Logado, mas não foi possível carregar seu perfil: " + error.message
           );
         }
       } else {
