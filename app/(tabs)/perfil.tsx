@@ -23,14 +23,14 @@ export default function ProfileScreen() {
 
   const handleLinkCouple = () => {
     if (!newCoupleId.trim()) return;
-    
+
     Alert.alert(
       'Vincular Casal',
       'Tem certeza que deseja vincular ao código do seu parceiro(a)? Isso sincronizará as listas de vocês.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Vincular', 
+        {
+          text: 'Vincular',
           onPress: () => {
             setCoupleId(newCoupleId.trim());
             setNewCoupleId('');
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#1a1a1a', '#000']} style={styles.background} />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Cabeçalho Premium */}
         <View style={styles.header}>
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
             <Text style={styles.statNumber}>{watched?.length || 0}</Text>
             <Text style={styles.statLabel}>Assistidos</Text>
           </LinearGradient>
-          
+
           <LinearGradient colors={['#222', '#161616']} style={styles.statCard}>
             <Ionicons name="bookmark" size={24} color="#7c4dff" />
             <Text style={styles.statNumber}>{watchlist?.length || 0}</Text>
@@ -92,10 +92,10 @@ export default function ProfileScreen() {
         {/* Seção de Conexão */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Conexão do Casal</Text>
-          
+
           {/* Card: Meu Código */}
           <View style={styles.glassCard}>
-            <Text style={styles.cardLabel}>Seu seu Código de Convite:</Text>
+            <Text style={styles.cardLabel}>seu Código de Convite:</Text>
             <TouchableOpacity onPress={copyToClipboard} style={styles.codeRow}>
               <Text style={styles.codeDisplay}>{user?.uid}</Text>
               <Ionicons name="copy-outline" size={20} color="#ff4081" />
@@ -115,8 +115,8 @@ export default function ProfileScreen() {
                 onChangeText={setNewCoupleId}
                 autoCapitalize="none"
               />
-              <TouchableOpacity 
-                style={[styles.linkButton, !newCoupleId && styles.buttonDisabled]} 
+              <TouchableOpacity
+                style={[styles.linkButton, !newCoupleId && styles.buttonDisabled]}
                 onPress={handleLinkCouple}
                 disabled={!newCoupleId}
               >

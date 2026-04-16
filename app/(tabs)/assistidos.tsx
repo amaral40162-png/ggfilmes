@@ -8,37 +8,37 @@ import { Ionicons } from "@expo/vector-icons";
 export default function Assistidos() {
     const { watched } = useContext(MovieContext);
 
-  return (
-    <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#1a1a1a', '#000']} style={styles.background} />
-        
-        <View style={styles.header}>
-            <Text style={styles.title}>Vistos pelo Casal 🎬</Text>
-            <Text style={styles.subtitle}>{watched.length} histórias compartilhadas</Text>
-        </View>
+    return (
+        <SafeAreaView style={styles.container}>
+            <LinearGradient colors={['#1a1a1a', '#000']} style={styles.background} />
 
-        <FlatList
-            data={watched}
-            contentContainerStyle={styles.listContent}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <MovieCard 
-                    movie={item} 
-                    isWatched={true}
-                    onPressWatch={() => {
-                        // Futuramente: Abrir modal de edição da nota
-                    }}
-                />
-            )}
-            ListEmptyComponent={
-                <View style={styles.empty}>
-                    <Ionicons name="videocam-outline" size={60} color="#333" />
-                    <Text style={styles.emptyText}>Vocês ainda não marcaram nenhum filme como visto. Tempo de pipoca!</Text>
-                </View>
-            }
-        />
-    </SafeAreaView>
-  );
+            <View style={styles.header}>
+                <Text style={styles.title}>Vistos por nós 🎬</Text>
+                <Text style={styles.subtitle}>{watched.length} histórias compartilhadas</Text>
+            </View>
+
+            <FlatList
+                data={watched}
+                contentContainerStyle={styles.listContent}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                    <MovieCard
+                        movie={item}
+                        isWatched={true}
+                        onPressWatch={() => {
+                            // Futuramente: Abrir modal de edição da nota
+                        }}
+                    />
+                )}
+                ListEmptyComponent={
+                    <View style={styles.empty}>
+                        <Ionicons name="videocam-outline" size={60} color="#333" />
+                        <Text style={styles.emptyText}>Vocês ainda não marcaram nenhum filme como visto. Tempo de pipoca!</Text>
+                    </View>
+                }
+            />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
