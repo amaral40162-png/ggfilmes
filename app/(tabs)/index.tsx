@@ -108,7 +108,7 @@ export default function Home() {
           }
         />
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
