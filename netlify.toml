@@ -5,4 +5,4 @@
 
 [build]
   publish = "dist"
-  command = "npx expo export"
+  command = "npx expo export --platform web"
