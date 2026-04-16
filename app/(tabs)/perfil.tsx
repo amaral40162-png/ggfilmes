@@ -9,9 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
-  const { user, coupleId, setCoupleId } = useAuth();
+  const { user, coupleId, inviteCode, linkByInviteCode } = useAuth();
   const { watched, watchlist } = useContext(MovieContext);
   const [newCoupleId, setNewCoupleId] = useState('');
+  const [linking, setLinking] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -21,30 +22,25 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLinkCouple = () => {
+  const handleLinkCouple = async () => {
     if (!newCoupleId.trim()) return;
 
-    Alert.alert(
-      'Vincular Casal',
-      'Tem certeza que deseja vincular ao código do seu parceiro(a)? Isso sincronizará as listas de vocês.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Vincular',
-          onPress: () => {
-            setCoupleId(newCoupleId.trim());
-            setNewCoupleId('');
-            Alert.alert('Sucesso', 'Contas vinculadas com sucesso!');
-          }
-        }
-      ]
-    );
+    setLinking(true);
+    const success = await linkByInviteCode(newCoupleId.trim());
+    setLinking(false);
+
+    if (success) {
+      setNewCoupleId('');
+      Alert.alert('Sucesso', 'Vocês agora estão conectados! As listas serão sincronizadas em tempo real.');
+    } else {
+      Alert.alert('Código Inválido', 'Não encontramos nenhum usuário com este código de convite.');
+    }
   };
 
   const copyToClipboard = async () => {
-    if (user?.uid) {
-      await Clipboard.setStringAsync(user.uid);
-      Alert.alert('Copiado', 'Seu código foi copiado para a área de transferência.');
+    if (inviteCode) {
+      await Clipboard.setStringAsync(inviteCode);
+      Alert.alert('Copiado', 'Código de convite copiado!');
     }
   };
 
@@ -95,12 +91,14 @@ export default function ProfileScreen() {
 
           {/* Card: Meu Código */}
           <View style={styles.glassCard}>
-            <Text style={styles.cardLabel}>seu Código de Convite:</Text>
+            <Text style={styles.cardLabel}>Seu Código de Convite (6 dígitos):</Text>
             <TouchableOpacity onPress={copyToClipboard} style={styles.codeRow}>
-              <Text style={styles.codeDisplay}>{user?.uid}</Text>
-              <Ionicons name="copy-outline" size={20} color="#ff4081" />
+              <Text style={[styles.codeDisplay, { fontSize: 24, textAlign: 'center', letterSpacing: 5 }]}>
+                {inviteCode || '------'}
+              </Text>
+              <Ionicons name="copy-outline" size={24} color="#ff4081" />
             </TouchableOpacity>
-            <Text style={styles.helperText}>Mande esse código para o seu parceiro(a) colar no app dele(a).</Text>
+            <Text style={styles.helperText}>Mande esse número para o seu parceiro(a) colar no app dele(a).</Text>
           </View>
 
           {/* Card: Vincular */}
@@ -109,22 +107,27 @@ export default function ProfileScreen() {
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                placeholder="Cole o código aqui..."
+                placeholder="Ex: 123456"
                 placeholderTextColor="#666"
                 value={newCoupleId}
                 onChangeText={setNewCoupleId}
-                autoCapitalize="none"
+                keyboardType="number-pad"
+                maxLength={6}
               />
               <TouchableOpacity
-                style={[styles.linkButton, !newCoupleId && styles.buttonDisabled]}
+                style={[styles.linkButton, (!newCoupleId || linking) && styles.buttonDisabled]}
                 onPress={handleLinkCouple}
-                disabled={!newCoupleId}
+                disabled={!newCoupleId || linking}
               >
                 <LinearGradient
                   colors={['#ff4081', '#ef476f']}
                   style={styles.linkButtonGradient}
                 >
-                  <Ionicons name="checkmark" size={20} color="#fff" />
+                  {linking ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="checkmark" size={24} color="#fff" />
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -134,7 +137,7 @@ export default function ProfileScreen() {
           <View style={[styles.glassCard, { marginTop: 15, borderColor: '#333', backgroundColor: 'rgba(255, 64, 129, 0.05)' }]}>
             <View style={styles.statusHeader}>
               <View style={styles.statusDot} />
-              <Text style={styles.cardLabel}>ID do Casal Ativo</Text>
+              <Text style={styles.cardLabel}>ID de Sincronização</Text>
             </View>
             <Text style={styles.activeIdText}>{coupleId}</Text>
           </View>
