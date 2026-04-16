@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Alert } from 'react-native';
 import { auth, db } from '../services/firebase';
 
 interface AuthContextType {
@@ -21,65 +20,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    const initializeAuth = async () => {
-      setLoading(true);
+    async function syncProfile(currentUser: User | null) {
+      if (!isMounted) return;
+      
+      if (currentUser) {
+        try {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            setCoupleId(userDoc.data().coupleId);
+          } else {
+            // Cria perfil inicial se não existir
+            const defaultId = currentUser.uid;
+            await setDoc(userDocRef, {
+              email: currentUser.email,
+              coupleId: defaultId,
+              createdAt: new Date().toISOString()
+            });
+            setCoupleId(defaultId);
+          }
+        } catch (e) {
+          console.error("Erro ao sincronizar perfil:", e);
+        }
+      } else {
+        setCoupleId(null);
+      }
+      
+      // Finaliza o loading apenas aqui, depois que o perfil foi tentado
+      setLoading(false);
+    }
+
+    async function init() {
+      // 1. Tenta pegar resultado de um possível redirecionamento anterior
       try {
-        // 1. Primeiro processa o redirecionamento (essencial na Netlify)
-        const result = await getRedirectResult(auth);
-        if (result?.user && isMounted) {
-          console.log("Usuário detectado após redirecionamento:", result.user.email);
-          // O onAuthStateChanged será disparado em seguida, então não precisamos setar o user aqui
-          // mas garantimos que o processo terminou.
-        }
-      } catch (error: any) {
-        console.error("Erro no processamento do redirecionamento:", error);
-        if (error.code !== 'auth/web-context-cancelled' && isMounted) {
-          Alert.alert("Erro de Login", "O Google não pôde completar o login: " + error.message);
-        }
+        await getRedirectResult(auth);
+      } catch (e) {
+        console.error("Erro ao processar redirect:", e);
       }
 
-      // 2. Escuta mudanças no estado de autenticação
-      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        if (!isMounted) return;
-
+      // 2. Inicia o listener de estado
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
-        
-        if (currentUser) {
-          try {
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            
-            if (userDoc.exists()) {
-              setCoupleId(userDoc.data().coupleId);
-            } else {
-              const defaultCoupleId = currentUser.uid;
-              await setDoc(userDocRef, {
-                email: currentUser.email,
-                coupleId: defaultCoupleId
-              });
-              setCoupleId(defaultCoupleId);
-            }
-          } catch (error: any) {
-            console.error("Erro ao gerenciar perfil:", error);
-          }
-        } else {
-          setCoupleId(null);
-        }
-        
-        // Só liberamos o carregamento depois que tudo estiver resolvido
-        setLoading(false);
+        syncProfile(currentUser);
       });
 
       return unsubscribe;
-    };
+    }
 
-    const authCleanUp = initializeAuth();
+    const authPromise = init();
 
     return () => {
       isMounted = false;
-      authCleanUp.then(unsubscribe => {
-        if (typeof unsubscribe === 'function') unsubscribe();
-      });
+      authPromise.then(unsub => unsub && unsub());
     };
   }, []);
 
@@ -88,8 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await setDoc(doc(db, 'users', user.uid), { coupleId: newId }, { merge: true });
         setCoupleId(newId);
-      } catch (error: any) {
-        Alert.alert("Erro ao Vincular", error.message);
+      } catch (e) {
+        console.error("Erro ao vincular:", e);
       }
     }
   };

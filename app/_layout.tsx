@@ -1,58 +1,50 @@
-import { useEffect } from "react";
-import { Stack, router, useSegments } from "expo-router";
-import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
-import { MovieProvider } from "../src/context/MovieContext";
+import { Stack } from "expo-router";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import { MovieProvider } from "../src/context/MovieContext";
+import { useEffect } from "react";
+import { useRouter, useSegments } from "expo-router";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    // Se ainda está carregando o estado do Firebase, não faz nada
+    // Só toma decisões de rota quando o Firebase terminar de carregar
     if (loading) return;
 
     const inAuthGroup = segments[0] === "login";
 
     if (!user && !inAuthGroup) {
-      // Se não tem usuário e não está na tela de login, manda para o login
+      // Se não está logado e não está no login, vai para o login
       router.replace("/login");
     } else if (user && inAuthGroup) {
-      // Se já logou e ainda está na tela de login, manda para as abas
+      // Se já logou e ainda está no login, vai para o app
       router.replace("/(tabs)");
     }
   }, [user, loading, segments]);
+
+  // Enquanto carrega o estado inicial, mostramos um spinner centralizado
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ff4081" />
+      </View>
+    );
+  }
 
   return <>{children}</>;
 }
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    ...Ionicons.font,
-  });
-
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
-
-  if (!loaded && !error) {
-    return null;
-  }
-
   return (
     <AuthProvider>
       <MovieProvider>
         <AuthGuard>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="login" options={{ gestureEnabled: false }} />
-            <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="(tabs)" />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           </Stack>
         </AuthGuard>
@@ -60,3 +52,12 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  }
+});
