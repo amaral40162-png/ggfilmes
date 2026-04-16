@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { MovieProvider } from "../src/context/MovieContext";
 import { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
