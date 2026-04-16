@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 
@@ -18,10 +18,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function syncProfile(currentUser: User | null) {
-      if (!isMounted) return;
+    // Listener ultra-simples para evitar travas
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
       
       if (currentUser) {
         try {
@@ -31,7 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userDoc.exists()) {
             setCoupleId(userDoc.data().coupleId);
           } else {
-            // Cria perfil inicial se não existir
             const defaultId = currentUser.uid;
             await setDoc(userDocRef, {
               email: currentUser.email,
@@ -41,38 +39,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setCoupleId(defaultId);
           }
         } catch (e) {
-          console.error("Erro ao sincronizar perfil:", e);
+          console.error("Erro silencioso de perfil:", e);
         }
       } else {
         setCoupleId(null);
       }
       
-      // Finaliza o loading apenas aqui, depois que o perfil foi tentado
+      // Libera o carregamento o mais rápido possível
       setLoading(false);
-    }
+    });
 
-    async function init() {
-      // 1. Tenta pegar resultado de um possível redirecionamento anterior
-      try {
-        await getRedirectResult(auth);
-      } catch (e) {
-        console.error("Erro ao processar redirect:", e);
-      }
-
-      // 2. Inicia o listener de estado
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        syncProfile(currentUser);
-      });
-
-      return unsubscribe;
-    }
-
-    const authPromise = init();
+    // Segurança: se o Firebase não responder em 8 segundos, libera o app mesmo assim
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000);
 
     return () => {
-      isMounted = false;
-      authPromise.then(unsub => unsub && unsub());
+      unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 

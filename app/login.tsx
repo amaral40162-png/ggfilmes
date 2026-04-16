@@ -35,22 +35,24 @@ export default function LoginScreen() {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      // Diferencia ambiente para melhor experiência
-      // Localhost/Desktop -> Popup | Mobile Web -> Redirect
-      const isLocalhost = Platform.OS === 'web' && window.location.hostname === 'localhost';
-      
-      if (isLocalhost) {
+      if (Platform.OS === 'web') {
+        // Método mais estável para Web/Netlify
         await signInWithPopup(auth, googleProvider);
       } else {
+        // Redirecionamento para Native (se houver)
         await signInWithRedirect(auth, googleProvider);
       }
     } catch (error: any) {
       console.error(error);
       let msg = "Erro ao conectar com Google.";
-      if (error.code === 'auth/unauthorized-domain') {
-        msg = "Domínio não autorizado no Firebase Console.";
+      
+      if (error.code === 'auth/popup-blocked') {
+        msg = "O navegador bloqueou a janela de login. Por favor, permita popups para este site.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        msg = "Este link (domínio) não foi autorizado no seu console do Firebase.";
       }
-      Alert.alert('Erro de Login', msg + "\n" + error.message);
+
+      Alert.alert('Falha no Login', msg + "\n\nDetalhe: " + error.message);
       setLoading(false);
     }
   };

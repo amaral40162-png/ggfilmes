@@ -30,6 +30,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#ff4081" />
+        <Text style={{ color: '#888', marginTop: 15, fontSize: 14 }}>Conectando ao Firebase...</Text>
       </View>
     );
   }
