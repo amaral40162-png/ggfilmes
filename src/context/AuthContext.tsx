@@ -19,58 +19,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Processar o resultado do redirecionamento do Google se existir
-    const checkRedirect = async () => {
+    let isMounted = true;
+
+    const initializeAuth = async () => {
+      setLoading(true);
       try {
+        // 1. Primeiro processa o redirecionamento (essencial na Netlify)
         const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log("Login via redirect bem-sucedido:", result.user.email);
+        if (result?.user && isMounted) {
+          console.log("Usuário detectado após redirecionamento:", result.user.email);
+          // O onAuthStateChanged será disparado em seguida, então não precisamos setar o user aqui
+          // mas garantimos que o processo terminou.
         }
       } catch (error: any) {
-        console.error("Erro no retorno do redirect do Google:", error);
-        if (error.code !== 'auth/web-context-cancelled') {
-          Alert.alert("Erro de Login", "O Google recusou o acesso: " + error.message);
+        console.error("Erro no processamento do redirecionamento:", error);
+        if (error.code !== 'auth/web-context-cancelled' && isMounted) {
+          Alert.alert("Erro de Login", "O Google não pôde completar o login: " + error.message);
         }
       }
+
+      // 2. Escuta mudanças no estado de autenticação
+      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        if (!isMounted) return;
+
+        setUser(currentUser);
+        
+        if (currentUser) {
+          try {
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+              setCoupleId(userDoc.data().coupleId);
+            } else {
+              const defaultCoupleId = currentUser.uid;
+              await setDoc(userDocRef, {
+                email: currentUser.email,
+                coupleId: defaultCoupleId
+              });
+              setCoupleId(defaultCoupleId);
+            }
+          } catch (error: any) {
+            console.error("Erro ao gerenciar perfil:", error);
+          }
+        } else {
+          setCoupleId(null);
+        }
+        
+        // Só liberamos o carregamento depois que tudo estiver resolvido
+        setLoading(false);
+      });
+
+      return unsubscribe;
     };
 
-    checkRedirect();
+    const authCleanUp = initializeAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true);
-      setUser(currentUser);
-      
-      if (currentUser) {
-        try {
-          // Busca o coupleId do perfil do usuário no Firestore
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            setCoupleId(userDoc.data().coupleId);
-          } else {
-            // Se for novo usuário, por padrão ele é o próprio "coupleId"
-            const defaultCoupleId = currentUser.uid;
-            await setDoc(userDocRef, {
-              email: currentUser.email,
-              coupleId: defaultCoupleId
-            });
-            setCoupleId(defaultCoupleId);
-          }
-        } catch (error: any) {
-          console.error("Erro ao gerenciar perfil do usuário:", error);
-          Alert.alert(
-            "Erro de Sincronização", 
-            "Logado, mas não foi possível carregar seu perfil: " + error.message
-          );
-        }
-      } else {
-        setCoupleId(null);
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      authCleanUp.then(unsubscribe => {
+        if (typeof unsubscribe === 'function') unsubscribe();
+      });
+    };
   }, []);
 
   const updateCoupleId = async (newId: string) => {

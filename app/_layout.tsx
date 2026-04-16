@@ -14,15 +14,16 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
 
   useEffect(() => {
+    // Se ainda está carregando o estado do Firebase, não faz nada
     if (loading) return;
 
     const inAuthGroup = segments[0] === "login";
 
     if (!user && !inAuthGroup) {
-      // Redireciona para o login se não estiver logado
+      // Se não tem usuário e não está na tela de login, manda para o login
       router.replace("/login");
     } else if (user && inAuthGroup) {
-      // Redireciona para o início se já estiver logado e tentar acessar o login
+      // Se já logou e ainda está na tela de login, manda para as abas
       router.replace("/(tabs)");
     }
   }, [user, loading, segments]);
