@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { View, Text, FlatList, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, FlatList, StyleSheet, SafeAreaView, Alert } from "react-native";
 import { MovieContext } from "@/src/context/MovieContext";
 import { MovieCard } from "@/components/MovieCard";
 import { LinearGradient } from "expo-linear-gradient";
@@ -8,11 +8,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 export default function QueroVer() {
-    const { watchlist, setActiveMovie } = useContext(MovieContext);
+    const { watchlist, setActiveMovie, removeMovie } = useContext(MovieContext);
 
     const openReviewModal = (movie: any) => {
         setActiveMovie(movie);
         router.push("/modal");
+    };
+
+    const handleRemove = (movie: any) => {
+        Alert.alert(
+            "Remover Filme",
+            "Deseja remover este filme da sua lista?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { text: "Remover", style: "destructive", onPress: () => removeMovie(movie.docId) }
+            ]
+        );
     };
 
     return (
@@ -32,6 +43,7 @@ export default function QueroVer() {
                 <MovieCard 
                     movie={item} 
                     onPressWatch={() => openReviewModal(item)}
+                    onPressRemove={() => handleRemove(item)}
                 />
             )}
             ListEmptyComponent={

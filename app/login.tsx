@@ -3,7 +3,12 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityInd
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { auth, googleProvider } from '../src/services/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithRedirect, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithRedirect, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+  webClientId: '316635272922-b2jn8lhriir7qrflf94l7ltm645jh4s5.apps.googleusercontent.com',
+});
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -32,6 +37,21 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('E-mail necessário', 'Por favor, digite seu e-mail no campo acima para redefinir a senha.');
+      return;
+    }
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Sucesso!', 'Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.');
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Erro', error.message);
+    }
+  };
+
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
@@ -39,7 +59,14 @@ export default function LoginScreen() {
         // A pedido para evitar loops: forçar popup em qualquer navegador web, até celular
         await signInWithPopup(auth, googleProvider);
       } else {
-        await signInWithRedirect(auth, googleProvider);
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (response.data?.idToken) {
+          const credential = GoogleAuthProvider.credential(response.data.idToken);
+          await signInWithCredential(auth, credential);
+        } else {
+          throw new Error('Nenhum token retornado pelo Google.');
+        }
       }
     } catch (error: any) {
       console.error(error);
@@ -49,9 +76,12 @@ export default function LoginScreen() {
         msg = "O navegador bloqueou a janela de login. Por favor, permita popups para este site.";
       } else if (error.code === 'auth/unauthorized-domain') {
         msg = "Este link (domínio) não foi autorizado no seu console do Firebase.";
+      } else if (error.code === '10' || error.message.includes('DEVELOPER_ERROR')) {
+        msg = "Falta adicionar a assinatura (SHA-1) no console do Firebase.";
       }
 
       Alert.alert('Falha no Login', msg + "\n\nDetalhe: " + error.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -100,6 +130,12 @@ export default function LoginScreen() {
           <TouchableOpacity style={styles.mainButton} onPress={handleAuth} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{isLogin ? 'Entrar' : 'Cadastrar'}</Text>}
           </TouchableOpacity>
+
+          {isLogin && (
+            <TouchableOpacity onPress={handleForgotPassword} style={{ marginTop: 15, alignItems: 'center' }}>
+              <Text style={{ color: '#ff4081', fontSize: 14 }}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.divider}>
             <View style={styles.line} />

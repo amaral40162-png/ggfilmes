@@ -1,12 +1,23 @@
 import { useContext } from "react";
-import { View, Text, FlatList, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, FlatList, StyleSheet, SafeAreaView, Alert } from "react-native";
 import { MovieContext } from "@/src/context/MovieContext";
 import { MovieCard } from "@/components/MovieCard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Assistidos() {
-    const { watched } = useContext(MovieContext);
+    const { watched, removeMovie } = useContext(MovieContext);
+
+    const handleRemove = (movie: any) => {
+        Alert.alert(
+            "Remover Filme",
+            "Deseja remover este filme dos assistidos?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { text: "Remover", style: "destructive", onPress: () => removeMovie(movie.docId) }
+            ]
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -28,6 +39,7 @@ export default function Assistidos() {
                         onPressWatch={() => {
                             // Futuramente: Abrir modal de edição da nota
                         }}
+                        onPressRemove={() => handleRemove(item)}
                     />
                 )}
                 ListEmptyComponent={

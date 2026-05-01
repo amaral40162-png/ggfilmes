@@ -8,10 +8,11 @@ interface MovieCardProps {
   movie: any;
   onPressAdd?: () => void;
   onPressWatch?: () => void;
+  onPressRemove?: () => void;
   isWatched?: boolean;
 }
 
-export const MovieCard = ({ movie, onPressAdd, onPressWatch, isWatched }: MovieCardProps) => {
+export const MovieCard = ({ movie, onPressAdd, onPressWatch, onPressRemove, isWatched }: MovieCardProps) => {
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : 'https://via.placeholder.com/500x750?text=Sem+Poster';
@@ -66,6 +67,11 @@ export const MovieCard = ({ movie, onPressAdd, onPressWatch, isWatched }: MovieC
             <TouchableOpacity style={[styles.button, styles.watchButton]} onPress={onPressWatch}>
               <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
               <Text style={styles.buttonText}>{isWatched ? "Avaliar" : "Assisti!"}</Text>
+            </TouchableOpacity>
+          )}
+          {onPressRemove && (
+            <TouchableOpacity style={[styles.button, { paddingHorizontal: 12, marginLeft: 'auto', backgroundColor: 'rgba(255, 68, 68, 0.15)' }]} onPress={onPressRemove}>
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
             </TouchableOpacity>
           )}
         </View>
